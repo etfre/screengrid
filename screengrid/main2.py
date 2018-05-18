@@ -1,69 +1,101 @@
+import win32api
+import win32con
 import win32gui
-from re import match
-def draw_line():
-    print ('x1,y1,x2,y2?')
-    s=input()
-    x1,y1,x2,y2=s.split(',')
-    x1=int(x1)
-    y1=int(y1)
-    x2=int(x2)
-    y2=int(y2)
-    hwnd=win32gui.WindowFromPoint((x1,y1))
-    hdc=win32gui.GetDC(hwnd)
-    x1c,y1c=win32gui.ScreenToClient(hwnd,(x1,y1))
-    x2c,y2c=win32gui.ScreenToClient(hwnd,(x2,y2))
-    win32gui.MoveToEx(hdc,x1c,y1c)
-    win32gui.LineTo(hdc,x2c,y2c)
-    win32gui.ReleaseDC(hwnd,hdc)
-    main()
-def draw_point():
-    print ('x,y,color?')
-    s=input()
-    if match('\d+,\d+,\d+',s):
-        x,y,color=s.split(',')
-        x=int(x)
-        y=int(y)
-        color=int(color)
-        hwnd=win32gui.WindowFromPoint((x,y))
-        hdc=win32gui.GetDC(hwnd)
-        x1,y1=win32gui.ScreenToClient(hwnd,(x,y))
-        win32gui.SetPixel(hdc,x1,y1,color)
-        win32gui.ReleaseDC(hwnd,hdc)
-    main()
-def get_pixel_col():
-    print ('x,y?')
-    s=input()
-    if match('\d+,\d+',s):
-        x,y=s.split(',')
-        x=int(x)
-        y=int(y)
-        hwnd=win32gui.WindowFromPoint((x,y))
-        hdc=win32gui.GetDC(hwnd)
-        x1,y1=win32gui.ScreenToClient(hwnd,(x,y))
-        color=win32gui.GetPixel(hdc,x1,y1)
-        win32gui.ReleaseDC(hwnd,hdc)
-        print (color)
-    main()
-def get_current_pos_info():
-    x,y=win32gui.GetCursorPos()
-    hwnd=win32gui.WindowFromPoint((x,y))
-    hdc=win32gui.GetDC(hwnd)
-    x1,y1=win32gui.ScreenToClient(hwnd,(x,y))
-    print (x,y,win32gui.GetPixel(hdc,x1,y1))
-    win32gui.ReleaseDC(hwnd,hdc)
-    main()
+import time
+import threading
+
+#Code example modified from:
+#Christophe Keller
+#Hello World in Python using Win32
+
+# New code: Define global
+windowText = 'Hello send by Python via Win32!'
+
 def main():
-    print ('''l. draw line
-p. draw point
-g. get pixel color
-c. get current mouse position's info''')
-    s=input()
-    if s.lower()=='l':
-        draw_line()
-    if s.lower()=='p':
-        draw_point()
-    if s.lower()=='g':
-        get_pixel_col()
-    if s.lower()=='c':
-        get_current_pos_info()
-main()
+    #get instance handle
+    hInstance = win32api.GetModuleHandle()
+
+    # the class name
+    className = 'SimpleWin32'
+
+    # create and initialize window class
+    wndClass                = win32gui.WNDCLASS()
+    wndClass.style          = win32con.CS_HREDRAW | win32con.CS_VREDRAW
+    wndClass.lpfnWndProc    = wndProc
+    wndClass.hInstance      = hInstance
+    wndClass.hIcon          = win32gui.LoadIcon(0, win32con.IDI_APPLICATION)
+    wndClass.hCursor        = win32gui.LoadCursor(0, win32con.IDC_ARROW)
+    wndClass.hbrBackground  = win32gui.GetStockObject(win32con.WHITE_BRUSH)
+    wndClass.lpszClassName  = className
+
+    # register window class
+    wndClassAtom = None
+    try:
+        wndClassAtom = win32gui.RegisterClass(wndClass)
+    except Exception as e:
+        print (e)
+        raise e
+    exStyle = win32con.WS_EX_NOACTIVATE | win32con.WS_EX_TRANSPARENT
+    hWindow = win32gui.CreateWindowEx(
+        exStyle,
+        wndClassAtom,                   #it seems message dispatching only works with the atom, not the class name
+        'Python Win32 Window',
+        win32con.WS_OVERLAPPEDWINDOW,
+        win32con.CW_USEDEFAULT,
+        win32con.CW_USEDEFAULT,
+        win32con.CW_USEDEFAULT,
+        win32con.CW_USEDEFAULT,
+        0,
+        0,
+        hInstance,
+        None)
+
+    # Show & update the window
+    win32gui.ShowWindow(hWindow, win32con.SW_SHOWNORMAL)
+    win32gui.UpdateWindow(hWindow)
+
+    # New code: Create and start the thread
+    thr = threading.Thread(target=customDraw, args=(hWindow,), daemon=False)
+    thr.start()
+
+    # Dispatch messages
+    win32gui.PumpMessages()
+
+
+# New code: Attempt to change the text 1 second later
+def customDraw(hWindow):
+    global windowText
+    time.sleep(1.0)
+    windowText = 'Something new'
+    win32gui.RedrawWindow(hWindow, None, None, win32con.RDW_INVALIDATE | win32con.RDW_ERASE)
+
+
+def wndProc(hWnd, message, wParam, lParam):
+
+    if message == win32con.WM_PAINT:
+        hDC, paintStruct = win32gui.BeginPaint(hWnd)
+
+        rect = win32gui.GetClientRect(hWnd)
+        print(rect, dir(rect))
+        for i in range(1, 30):
+            rect = (0,0,500+20*i, 400+20*i)
+            win32gui.DrawText(
+                hDC,
+                windowText,
+                -1,
+                rect,
+                win32con.DT_SINGLELINE | win32con.DT_CENTER | win32con.DT_VCENTER)
+
+        win32gui.EndPaint(hWnd, paintStruct)
+        return 0
+
+    elif message == win32con.WM_DESTROY:
+        print('Being destroyed')
+        win32gui.PostQuitMessage(0)
+        return 0
+
+    else:
+        return win32gui.DefWindowProc(hWnd, message, wParam, lParam)
+
+if __name__ == '__main__':
+    main()

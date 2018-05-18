@@ -1,18 +1,16 @@
 import win32api, win32con, win32gui, win32ui
 import threading
 import time
-import sys
-import ctypes
 
-def stop(main_thread_id):
-    time.sleep(5)
-    print('egg sit')
-    # win32api.PostThreadMessage(main_thread_id, win32con.WM_QUIT, 0, 0);
-    win32api.PostThreadMessage(main_thread_id, win32con.WM_DESTROY, 0, 0);
-    print('hg1')
-    time.sleep(10)
-    # sys.exit()
-    print('hg')
+windowText = 'a foo barred'
+
+# New code: Attempt to change the text 1 second later
+def customDraw(hWindow):
+    global windowText
+    time.sleep(1.0)
+    windowText = 'Something new'
+    win32gui.RedrawWindow(hWindow, None, None, win32con.RDW_INVALIDATE | win32con.RDW_ERASE)
+    # win32gui.CloseWindow(hWindow)
 
 def main():
     hInstance = win32api.GetModuleHandle()
@@ -68,51 +66,39 @@ def main():
 
     # http://msdn.microsoft.com/en-us/library/windows/desktop/ms633548(v=vs.85).aspx
     #win32gui.ShowWindow(hWindow, win32con.SW_SHOW)
-    main_thread_id = win32api.GetCurrentThreadId()
-    threading.Thread(target=stop, args=(main_thread_id,), daemon=True).start()
-    t = time.time()
+    threading.Thread(target=customDraw, args=(hWindow,)).start()
     win32gui.PumpMessages()
-    win32api.PostMessage(win32con.WM_DESTROY, 0, 0)
-    win32gui.PumpWaitingMessages()
-    print('dun')
-    input()
 
 def wndProc(hWnd, message, wParam, lParam):
-    print('pumpit', message, message ==win32con.WM_PAINT, message==win32con.WM_DESTROY)
     if message == win32con.WM_PAINT:
         hdc, paintStruct = win32gui.BeginPaint(hWnd)
 
-        # dpiScale = win32ui.GetDeviceCaps(hdc, win32con.LOGPIXELSX) / 60.0
-        # fontSize = 80
+        dpiScale = win32ui.GetDeviceCaps(hdc, win32con.LOGPIXELSX) / 60.0
+        fontSize = 80
 
         # http://msdn.microsoft.com/en-us/library/windows/desktop/dd145037(v=vs.85).aspx
-        # lf = win32gui.LOGFONT()
-        # lf.lfFaceName = "Times New Roman"
-        # lf.lfHeight = int(round(dpiScale * fontSize))
+        lf = win32gui.LOGFONT()
+        lf.lfFaceName = "Times New Roman"
+        lf.lfHeight = int(round(dpiScale * fontSize))
         #lf.lfWeight = 150
         # Use nonantialiased to remove the white edges around the text.
-        # lf.lfQuality = win32con.NONANTIALIASED_QUALITY
-        # hf = win32gui.CreateFontIndirect(lf)
-        # win32gui.SelectObject(hdc, hf)
+        lf.lfQuality = win32con.NONANTIALIASED_QUALITY
+        hf = win32gui.CreateFontIndirect(lf)
+        win32gui.SelectObject(hdc, hf)
 
-        # rect = win32gui.GetClientRect(hWnd)
+        rect = win32gui.GetClientRect(hWnd)
         # http://msdn.microsoft.com/en-us/library/windows/desktop/dd162498(v=vs.85).aspx
-        br=win32gui.CreateSolidBrush(win32api.RGB(255,0,0))
-        win32gui.SelectObject(hdc, br)
-        win32gui.Rectangle(hdc, 100, 100, 200, 200)
-        win32gui.FillRect(hdc, (100, 100, 200, 200), br)
-        # win32gui.DrawText(
-        #     hdc,
-        #     'Text on the screen',
-        #     -1,
-        #     rect,
-        #     win32con.DT_CENTER | win32con.DT_NOCLIP | win32con.DT_SINGLELINE | win32con.DT_VCENTER
-        # )
+        win32gui.DrawText(
+            hdc,
+            windowText,
+            -1,
+            rect,
+            win32con.DT_CENTER | win32con.DT_NOCLIP | win32con.DT_SINGLELINE | win32con.DT_VCENTER
+        )
         win32gui.EndPaint(hWnd, paintStruct)
         return 0
 
     elif message == win32con.WM_DESTROY:
-        print('Closing the window.')
         win32gui.PostQuitMessage(0)
         return 0
 
