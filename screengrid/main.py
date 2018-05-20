@@ -16,8 +16,7 @@ def customDraw(hWindow):
     win32gui.RedrawWindow(hWindow, None, None, win32con.RDW_INVALIDATE | win32con.RDW_ERASE)
     # win32gui.CloseWindow(hWindow)
 
-def main():
-    canvas = screencanvas.ScreenCanvas()
+def draw_letter_grid(canvas):
     letters = string.ascii_lowercase
     xsize = canvas.width // len(letters)
     xremainder = canvas.width % len(letters) 
@@ -26,14 +25,20 @@ def main():
     y = 0
     for i, row_letter in enumerate(letters):
         x = 0
-        for j, col_letter in enumerate(letters):
-            canvas.add_rectangle(x, y, xsize, ysize, f'{row_letter}{col_letter}')
-            x += xsize
-            if j < xremainder:
-                x += 1
-        y += ysize 
+        recheight = ysize
         if i < yremainder:
-            y += 1
+            recheight += 1
+        for j, col_letter in enumerate(letters):
+            recwidth = xsize
+            if j < xremainder:
+                recwidth += 1
+            canvas.add_rectangle(x, y, recwidth, recheight, f'{row_letter}{col_letter}')
+            x += recwidth
+        y += recheight 
+
+def main():
+    canvas = screencanvas.ScreenCanvas()
+    draw_letter_grid(canvas)
     canvas.render()
     s = time.time()
     while time.time() - s < 10:
