@@ -37,6 +37,9 @@ class ScreenCanvas:
         rect = rectangle.Rectangle(x, y, width, height, text=text)
         self.rectangles.append(rect)
 
+    def reset(self):
+        self.rectangles = []
+
     def render(self):
         if self.window_handle is None:
             self.window_handle = win32gui.CreateWindowEx(
