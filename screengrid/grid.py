@@ -5,9 +5,15 @@ class Grid:
 
     def __init__(self):
         self.canvas = screencanvas.ScreenCanvas()
+        self.selection = ''
+        self.centers = {}
+
+    def reset(self):
+        self.canvas.reset()
+        self.centers = {}
 
     def draw_letter_grid(self, row=None):
-        self.canvas.reset()
+        self.reset()
         letters = string.ascii_lowercase
         xsize = self.canvas.width // len(letters)
         xremainder = self.canvas.width % len(letters) 
@@ -24,7 +30,12 @@ class Grid:
                     recwidth = xsize
                     if j < xremainder:
                         recwidth += 1
+                    self.centers[f'{row_letter}{col_letter}'] = x + recwidth//2, y + recheight//2
                     self.canvas.add_rectangle(x, y, recwidth, recheight, f'{row_letter}{col_letter}')
                     x += recwidth
             y += recheight
+        self.canvas.render()
+
+    def empty(self):
+        self.reset()
         self.canvas.render()

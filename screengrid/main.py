@@ -8,9 +8,28 @@ import functools
 
 import screencanvas
 import grid
+import mouse
+
+done = False
+
+LETTERS = set(string.ascii_lowercase)
 
 def on_press(main_grid, key):
-    main_grid.draw_letter_grid(row='h')
+    global done
+    if key.event_type == 'down':
+        return
+    if key.name in LETTERS:
+        if len(main_grid.selection) == 1:
+            x, y = main_grid.centers[f'{main_grid.selection}{key.name}']
+            mouse.move(x, y)
+            main_grid.empty()
+        else:
+            main_grid.draw_letter_grid(row=key.name)
+            main_grid.selection += key.name
+    elif key.name == 'backspace':
+        main_grid.draw_letter_grid()
+    elif key.name == 'esc':
+        main_grid.empty()
 
 def main():
     main_grid = grid.Grid()
