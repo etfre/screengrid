@@ -1,0 +1,6 @@
+setup.py
+screengrid.egg-info/PKG-INFO
+screengrid.egg-info/SOURCES.txt
+screengrid.egg-info/dependency_links.txt
+screengrid.egg-info/requires.txt
+screengrid.egg-info/top_level.txt

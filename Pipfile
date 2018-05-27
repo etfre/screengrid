@@ -9,3 +9,4 @@ keyboard = "*"
 mouse = "*"
 
 [dev-packages]
+twine = "*"
