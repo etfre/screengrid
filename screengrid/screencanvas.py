@@ -32,7 +32,9 @@ class ScreenCanvas:
         self.height = height
         self.rectangles: List[rectangle.Rectangle] = []
         self._wndClassAtom, self._hInstance = self._win32_setup()
-        self.t = threading.Thread(target=self.run, daemon=True)
+        self.run_win32_message_loop = False
+        self.window_rendered = threading.Event()
+        self.render_lock = threading.Lock()
 
     def add_rectangle(self, x: int, y: int, width: int, height: int, text=None):
         rect = rectangle.Rectangle(x, y, width, height, text=text)
@@ -42,34 +44,14 @@ class ScreenCanvas:
         self.rectangles = []
 
     def render(self):
-        if self.window_handle is None:
-            threading.Thread(target=self.initial_draw, daemon=True).start()
-            # self.window_handle = win32gui.CreateWindowEx(
-            #     EX_STYLE,
-            #     self._wndClassAtom,
-            #     None, # WindowName
-            #     STYLE,
-            #     self.x,
-            #     self.y,
-            #     self.width,
-            #     self.height,
-            #     None, # hWndParent
-            #     None, # hMenu
-            #     self._hInstance,
-            #     None # lpParam
-            # )
-            #     # http://msdn.microsoft.com/en-us/library/windows/desktop/ms633540(v=vs.85).aspx
-            # win32gui.SetLayeredWindowAttributes(self.window_handle, 0x00ffffff, 255, win32con.LWA_COLORKEY | win32con.LWA_ALPHA)
-
-            # # http://msdn.microsoft.com/en-us/library/windows/desktop/dd145167(v=vs.85).aspx
-            # #win32gui.UpdateWindow(self.window_handle)
-
-            # # http://msdn.microsoft.com/en-us/library/windows/desktop/ms633545(v=vs.85).aspx
-            # win32gui.SetWindowPos(self.window_handle, win32con.HWND_TOPMOST, 0, 0, 0, 0,
-            #     win32con.SWP_NOACTIVATE | win32con.SWP_NOMOVE | win32con.SWP_NOSIZE | win32con.SWP_SHOWWINDOW)
-            # self.run()
-        else:
-            win32gui.RedrawWindow(self.window_handle, None, None, win32con.RDW_INVALIDATE | win32con.RDW_ERASE)
+        with self.render_lock as Lock:
+            if self.window_handle is None:
+                self.window_handle = 'placeholder'
+                threading.Thread(target=self.initial_draw, daemon=True).start()
+            else:
+                self.window_rendered.wait()
+                win32gui.RedrawWindow(self.window_handle, None, None, win32con.RDW_INVALIDATE | win32con.RDW_ERASE)
+            
 
     def initial_draw(self):
         self.window_handle = win32gui.CreateWindowEx(
@@ -95,14 +77,12 @@ class ScreenCanvas:
         # http://msdn.microsoft.com/en-us/library/windows/desktop/ms633545(v=vs.85).aspx
         win32gui.SetWindowPos(self.window_handle, win32con.HWND_TOPMOST, 0, 0, 0, 0,
             win32con.SWP_NOACTIVATE | win32con.SWP_NOMOVE | win32con.SWP_NOSIZE | win32con.SWP_SHOWWINDOW)
-        self.run()
+        self.window_rendered.set()
+        self.pump_messages()
 
-    def run(self):
-        s = time.time()
-        print('run')
-        while time.time() - s < 10:
+    def pump_messages(self):
+        while True:
             win32gui.PumpWaitingMessages()
-        print('dun run')
 
     def _win_message(self, hWnd, message, wParam, lParam):
         if message == win32con.WM_PAINT:
@@ -122,7 +102,6 @@ class ScreenCanvas:
             win32gui.SelectObject(device_context_handle, hf)
             self._draw(device_context_handle)
             win32gui.EndPaint(hWnd, paintStruct)
-            print('t paint')
             return 0
 
         elif message == win32con.WM_DESTROY:
@@ -153,3 +132,7 @@ class ScreenCanvas:
         # win32gui does not support RegisterClassEx
         wndClassAtom = win32gui.RegisterClass(wndClass)
         return wndClassAtom, hInstance
+
+def pump_messages(canvas):
+    pass
+    
