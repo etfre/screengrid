@@ -103,11 +103,9 @@ class ScreenCanvas:
             self._draw(device_context_handle)
             win32gui.EndPaint(hWnd, paintStruct)
             return 0
-
         elif message == win32con.WM_DESTROY:
             win32gui.PostQuitMessage(0)
             return 0
-
         else:
             return win32gui.DefWindowProc(hWnd, message, wParam, lParam)
 
