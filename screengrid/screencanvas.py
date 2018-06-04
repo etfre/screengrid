@@ -24,13 +24,15 @@ class ScreenCanvas:
         x = 0,
         y = 0,
         width = win32api.GetSystemMetrics(win32con.SM_CXSCREEN),
-        height = win32api.GetSystemMetrics(win32con.SM_CYSCREEN)
+        height = win32api.GetSystemMetrics(win32con.SM_CYSCREEN),
+        font_color = (0, 0, 0)
     ):
         self.window_handle = None
         self.x = x
         self.y = y
         self.width = width
         self.height = height
+        self.font_color = font_color
         self.rectangles: List[rectangle.Rectangle] = []
         self._wndClassAtom, self._hInstance = self._win32_setup()
         self.window_rendered = threading.Event()
@@ -44,7 +46,7 @@ class ScreenCanvas:
         self.rectangles = []
 
     def render(self):
-        with self.render_lock as Lock:
+        with self.render_lock:
             if self.window_handle is None:
                 self.window_handle = 'placeholder'
                 threading.Thread(target=self.initial_draw, daemon=True).start()
@@ -95,6 +97,7 @@ class ScreenCanvas:
             # Use nonantialiased to remove the white edges around the text.
             lf.lfQuality = win32con.NONANTIALIASED_QUALITY
             hf = win32gui.CreateFontIndirect(lf)
+            win32gui.SetTextColor(device_context_handle, win32_color(self.font_color))
             win32gui.SelectObject(device_context_handle, hf)
             self._draw(device_context_handle)
             win32gui.EndPaint(hWnd, paintStruct)
@@ -130,3 +133,7 @@ class ScreenCanvas:
 def pump_messages(canvas_reference):
     while canvas_reference is not None:
         win32gui.PumpWaitingMessages()
+
+def win32_color(color):
+    if isinstance(color, (tuple, list)):
+        return win32api.RGB(*color)

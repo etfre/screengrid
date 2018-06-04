@@ -14,11 +14,22 @@ LETTERS = set(string.ascii_lowercase)
 
 class Grid:
 
-    def __init__(self):
-        self.canvas = screencanvas.ScreenCanvas()
+    def __init__(self, font_color=(0, 0, 0)):
+        self.canvas = screencanvas.ScreenCanvas(font_color=font_color)
         self.selection = ''
         self.centers = {}
         self.keyboard_hook = None
+        self._font_color = font_color
+
+    @property
+    def font_color(self):
+        return self._font_color
+
+    @font_color.setter
+    def font_color(self, value):
+        self._font_color = value
+        self.canvas.font_color = value
+        self.canvas.render()
 
     def reset(self):
         self.canvas.reset()

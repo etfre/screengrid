@@ -16,9 +16,8 @@ LETTERS = set(string.ascii_lowercase)
 def foo():
     main_grid = screengrid.Grid()
     main_grid.draw_letter_grid()
-    # s = time.time()
-    # while time.time() - s < 10:
-    #     win32gui.PumpWaitingMessages()
+    time.sleep(5)
+    main_grid.font_color = 100, 100, 100
 
 def main():
     threading.Thread(target=foo, daemon=True).start()
