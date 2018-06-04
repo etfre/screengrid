@@ -81,10 +81,6 @@ class ScreenCanvas:
         self.window_rendered.set()
         pump_messages(weakref.ref(self))
 
-    def pump_messages(self):
-        while True:
-            win32gui.PumpWaitingMessages()
-
     def _win_message(self, hWnd, message, wParam, lParam):
         if message == win32con.WM_PAINT:
             device_context_handle, paintStruct = win32gui.BeginPaint(hWnd)
