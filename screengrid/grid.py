@@ -23,6 +23,7 @@ class Grid:
     def reset(self):
         self.canvas.reset()
         self.centers = {}
+        self.selection = ''
         try:
             keyboard.unhook(self.keyboard_hook)
         except KeyError:
