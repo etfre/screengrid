@@ -1,4 +1,5 @@
 import win32api, win32con, win32gui, win32ui
+import weakref
 from typing import List
 import threading
 import time
@@ -78,7 +79,7 @@ class ScreenCanvas:
         win32gui.SetWindowPos(self.window_handle, win32con.HWND_TOPMOST, 0, 0, 0, 0,
             win32con.SWP_NOACTIVATE | win32con.SWP_NOMOVE | win32con.SWP_NOSIZE | win32con.SWP_SHOWWINDOW)
         self.window_rendered.set()
-        self.pump_messages()
+        pump_messages(weakref.ref(self))
 
     def pump_messages(self):
         while True:
@@ -131,6 +132,6 @@ class ScreenCanvas:
         wndClassAtom = win32gui.RegisterClass(wndClass)
         return wndClassAtom, hInstance
 
-def pump_messages(canvas):
-    pass
-    
+def pump_messages(canvas_reference):
+    while canvas_reference is not None:
+        win32gui.PumpWaitingMessages()
