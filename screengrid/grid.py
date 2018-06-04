@@ -60,13 +60,11 @@ class Grid:
         self.reset()
         self.keyboard_hook = keyboard.hook(self._on_key_press, suppress=True)
         letters = string.ascii_lowercase
-        xsize = self.canvas.width // len(letters)
-        xremainder = self.canvas.width % len(letters) 
-        ysize = self.canvas.height // len(letters)
-        yremainder = self.canvas.height % len(letters)
-        y = 0
+        xsize, xremainder = divmod(self.canvas.width, len(letters))
+        ysize, yremainder = divmod(self.canvas.height, len(letters))
+        y = self.canvas.y
         for i, row_letter in enumerate(letters):
-            x = 0
+            x = self.canvas.x
             recheight = ysize
             if i < yremainder:
                 recheight += 1
