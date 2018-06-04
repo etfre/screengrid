@@ -33,7 +33,6 @@ class ScreenCanvas:
         self.height = height
         self.rectangles: List[rectangle.Rectangle] = []
         self._wndClassAtom, self._hInstance = self._win32_setup()
-        self.run_win32_message_loop = False
         self.window_rendered = threading.Event()
         self.render_lock = threading.Lock()
 
