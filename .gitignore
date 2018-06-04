@@ -1,2 +1,4 @@
 /.vscode
 screengrid.egg-info/
+/build
+/dist
