@@ -36,7 +36,7 @@ here = os.path.abspath(os.path.dirname(__file__))
 #     long_description = '\n' + f.read()
 long_description = 'abc'
 # Load the package's __version__.py module as a dictionary.
-about = {'__version__': '0.0.6'}
+about = {'__version__': '0.0.7'}
 # with open(os.path.join(here, NAME, '__version__.py')) as f:
 #     exec(f.read(), about)
 
