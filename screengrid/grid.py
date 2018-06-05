@@ -40,25 +40,27 @@ class Grid:
         except KeyError:
             pass
 
-    def _on_key_press(self, key):
+    def _on_key_press(self, click, key):
         if key.event_type == 'down':
             return
         if key.name in LETTERS:
             if len(self.selection) == 1:
                 x, y = self.centers[f'{self.selection}{key.name}']
                 mouse.move(x, y)
+                if click:
+                    mouse.click()
                 self.empty()
             else:
-                self.draw_letter_grid(row=key.name)
+                self.draw_letter_grid(row=key.name, click=click)
                 self.selection += key.name
         elif key.name == 'backspace':
-            self.draw_letter_grid()
+            self.draw_letter_grid(click=click)
         elif key.name == 'esc':
             self.empty()
 
-    def draw_letter_grid(self, row=None):
+    def draw_letter_grid(self, row=None, click=False):
         self.reset()
-        self.keyboard_hook = keyboard.hook(self._on_key_press, suppress=True)
+        self.keyboard_hook = keyboard.hook(functools.partial(self._on_key_press, click), suppress=True)
         letters = string.ascii_lowercase
         xsize, xremainder = divmod(self.canvas.width, len(letters))
         ysize, yremainder = divmod(self.canvas.height, len(letters))

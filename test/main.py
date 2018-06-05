@@ -1,21 +1,15 @@
 import win32api, win32con, win32gui, win32ui
 import threading
 import time
-import string
 import ctypes
 import keyboard
 import functools
 
 from context import screengrid
-import mouse
-
-done = False
-
-LETTERS = set(string.ascii_lowercase)
 
 def foo():
     main_grid = screengrid.Grid()
-    main_grid.draw_letter_grid()
+    main_grid.draw_letter_grid(click=True)
     time.sleep(5)
     main_grid.font_color = 100, 100, 100
 
