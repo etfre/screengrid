@@ -86,7 +86,7 @@ class ScreenCanvas:
         if message == win32con.WM_PAINT:
             device_context_handle, paintStruct = win32gui.BeginPaint(hWnd)
             dpiScale = win32ui.GetDeviceCaps(device_context_handle, win32con.LOGPIXELSX) / 60.0
-            fontSize = 20
+            fontSize = 14
 
             # http://msdn.microsoft.com/en-us/library/windows/desktop/dd145037(v=vs.85).aspx
             lf = win32gui.LOGFONT()

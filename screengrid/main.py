@@ -3,7 +3,6 @@ import threading
 import time
 import string
 import ctypes
-import keyboard
 import functools
 
 import screencanvas
@@ -16,7 +15,7 @@ LETTERS = set(string.ascii_lowercase)
 
 def foo():
     main_grid = grid.Grid()
-    main_grid.draw_letter_grid()
+    main_grid.overlay()
     s = time.time()
     while time.time() - s < 100:
         win32gui.PumpWaitingMessages()

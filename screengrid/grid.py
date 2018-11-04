@@ -1,16 +1,15 @@
 import string
-import keyboard
+from lib import keyboard
 from screengrid import screencanvas
 
 import win32api, win32con, win32gui, win32ui
 import threading
 import time
 import string
-import ctypes
 import functools
 import mouse
 
-LETTERS = set(string.ascii_lowercase)
+ALL_CHARS = string.ascii_lowercase + string.digits
 
 class Grid:
 
@@ -20,6 +19,8 @@ class Grid:
         self.centers = {}
         self.keyboard_hook = None
         self._font_color = font_color
+        self._xiterable = None
+        self._yiterable = None
 
     @property
     def font_color(self):
@@ -43,35 +44,34 @@ class Grid:
     def _on_key_press(self, click, key):
         if key.event_type == 'down':
             return
-        if key.name in LETTERS:
-            if len(self.selection) == 1:
-                x, y = self.centers[f'{self.selection}{key.name}']
-                mouse.move(x, y)
-                if click:
-                    mouse.click()
-                self.empty()
-            else:
-                self.draw_letter_grid(row=key.name, click=click)
-                self.selection += key.name
+        if not self.selection and key.name in self._xiterable:
+            self.overlay(row=key.name, click=click, xiterable=self._xiterable, yiterable=self._yiterable)
+            self.selection += key.name
+        elif key.name in self._yiterable:
+            x, y = self.centers[f'{self.selection}{key.name}']
+            mouse.move(x, y)
+            if click:
+                mouse.click()
+            self.empty()
         elif key.name == 'backspace':
-            self.draw_letter_grid(click=click)
+            self.overlay(click=click)
         elif key.name == 'esc':
             self.empty()
 
-    def draw_letter_grid(self, row=None, click=False):
+    def overlay(self, row=None, click=False, xiterable=ALL_CHARS, yiterable=ALL_CHARS):
+        self._xiterable, self._yiterable = xiterable, yiterable
         self.reset()
         self.keyboard_hook = keyboard.hook(functools.partial(self._on_key_press, click), suppress=True)
-        letters = string.ascii_lowercase
-        xsize, xremainder = divmod(self.canvas.width, len(letters))
-        ysize, yremainder = divmod(self.canvas.height, len(letters))
+        xsize, xremainder = divmod(self.canvas.width, len(xiterable))
+        ysize, yremainder = divmod(self.canvas.height, len(yiterable))
         y = self.canvas.y
-        for i, row_letter in enumerate(letters):
+        for i, row_letter in enumerate(xiterable):
             x = self.canvas.x
             recheight = ysize
             if i < yremainder:
                 recheight += 1
             if row is None or row == row_letter:
-                for j, col_letter in enumerate(letters):
+                for j, col_letter in enumerate(yiterable):
                     recwidth = xsize
                     if j < xremainder:
                         recwidth += 1
