@@ -20,6 +20,7 @@ AUTHOR = 'Evan Fredericksen'
 # What packages are required for this module to be executed?
 REQUIRED = [
     'keyboard',
+    'mouse',
     'pypiwin32',
 ]
 
@@ -59,7 +60,7 @@ class UploadCommand(Command):
             rmtree(os.path.join(here, 'dist'))
         except OSError:
             pass
-        os.system('pipenv run python setup.py sdist bdist_wheel && pipenv run twine upload dist/*')
+        os.system('python setup.py sdist bdist_wheel && python twine upload dist/*')
         remove_folders(('dist', 'build', 'pywindow.egg-info'))
         sys.exit()
 

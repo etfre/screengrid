@@ -1,16 +1,30 @@
 import win32api, win32con, win32gui, win32ui
 import ctypes
-import weakref
 from typing import List
 import threading
 import time
 import string
 import uuid
 import ctypes
+import queue
 from screengrid import rectangle, win32_contants
 
+def draw_loop(_queue: queue.Queue):
+    while True:
+        try:
+            canvas = _queue.get(block=True, timeout=0.02)
+        except queue.Empty:
+            pass
+        else:
+            canvas.initial_draw()
+        finally:
+            win32gui.PumpWaitingMessages()
 
-class ScreenCanvas:
+draw_queue = queue.Queue()
+draw_thread = threading.Thread(target=draw_loop, args=(draw_queue,), daemon=True)
+draw_thread.start()
+
+class ScreenCanvas:         
 
     def __init__(
         self,
@@ -23,7 +37,6 @@ class ScreenCanvas:
         self.window_handle = None
         self.x = x
         self.y = y
-        print(width, height)
         self.width = width
         self.height = height
         self.font_color = font_color
@@ -43,11 +56,10 @@ class ScreenCanvas:
         with self.render_lock:
             if self.window_handle is None:
                 self.window_handle = 'placeholder'
-                threading.Thread(target=self.initial_draw, daemon=True).start()
+                draw_queue.put(self)
             else:
                 self.window_rendered.wait()
                 win32gui.RedrawWindow(self.window_handle, None, None, win32_contants.RDW_INVALIDATE | win32_contants.RDW_ERASE)
-            
 
     def initial_draw(self):
         self.window_handle = win32gui.CreateWindowEx(
@@ -73,7 +85,6 @@ class ScreenCanvas:
         win32gui.SetWindowPos(self.window_handle, win32_contants.HWND_TOPMOST, 0, 0, 0, 0,
             win32_contants.SWP_NOACTIVATE | win32_contants.SWP_NOMOVE | win32_contants.SWP_NOSIZE | win32_contants.SWP_SHOWWINDOW)
         self.window_rendered.set()
-        pump_messages(weakref.ref(self))
 
     def _win_message(self, hWnd, message, wParam, lParam):
         if message == win32_contants.WM_PAINT:
@@ -122,11 +133,6 @@ class ScreenCanvas:
         # win32gui does not support RegisterClassEx
         wndClassAtom = win32gui.RegisterClass(wndClass)
         return wndClassAtom, hInstance
-
-def pump_messages(canvas_reference):
-    while canvas_reference is not None:
-        win32gui.PumpWaitingMessages()
-        time.sleep(.01)
 
 def win32_color(color):
     if isinstance(color, (tuple, list)):
