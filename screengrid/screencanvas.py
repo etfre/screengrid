@@ -1,4 +1,5 @@
 import win32api, win32con, win32gui, win32ui
+import ctypes
 import weakref
 from typing import List
 import threading
@@ -6,16 +7,8 @@ import time
 import string
 import uuid
 import ctypes
-from screengrid import rectangle
+from screengrid import rectangle, win32_contants
 
-# http://msdn.microsoft.com/en-us/library/windows/desktop/ff700543(v=vs.85).aspx
-# Consider using: WS_EX_COMPOSITED, WS_EX_LAYERED, WS_EX_NOACTIVATE, WS_EX_TOOLWINDOW, WS_EX_TOPMOST, WS_EX_TRANSPARENT
-# The WS_EX_TRANSPARENT flag makes events (like mouse clicks) fall through the window.
-EX_STYLE = win32con.WS_EX_COMPOSITED | win32con.WS_EX_LAYERED | win32con.WS_EX_NOACTIVATE | win32con.WS_EX_TOPMOST | win32con.WS_EX_TRANSPARENT
-
-# http://msdn.microsoft.com/en-us/library/windows/desktop/ms632600(v=vs.85).aspx
-# Consider using: WS_DISABLED, WS_POPUP, WS_VISIBLE
-STYLE = win32con.WS_DISABLED | win32con.WS_POPUP | win32con.WS_VISIBLE
 
 class ScreenCanvas:
 
@@ -23,13 +16,14 @@ class ScreenCanvas:
         self,
         x = 0,
         y = 0,
-        width = win32api.GetSystemMetrics(win32con.SM_CXSCREEN),
-        height = win32api.GetSystemMetrics(win32con.SM_CYSCREEN),
+        width = ctypes.windll.user32.GetSystemMetrics(win32_contants.SM_CXSCREEN),
+        height = ctypes.windll.user32.GetSystemMetrics(win32_contants.SM_CYSCREEN),
         font_color = (0, 0, 0)
     ):
         self.window_handle = None
         self.x = x
         self.y = y
+        print(width, height)
         self.width = width
         self.height = height
         self.font_color = font_color
@@ -52,15 +46,15 @@ class ScreenCanvas:
                 threading.Thread(target=self.initial_draw, daemon=True).start()
             else:
                 self.window_rendered.wait()
-                win32gui.RedrawWindow(self.window_handle, None, None, win32con.RDW_INVALIDATE | win32con.RDW_ERASE)
+                win32gui.RedrawWindow(self.window_handle, None, None, win32_contants.RDW_INVALIDATE | win32_contants.RDW_ERASE)
             
 
     def initial_draw(self):
         self.window_handle = win32gui.CreateWindowEx(
-            EX_STYLE,
+            win32_contants.EX_STYLE,
             self._wndClassAtom,
             None, # WindowName
-            STYLE,
+            win32_contants.STYLE,
             self.x,
             self.y,
             self.width,
@@ -71,21 +65,20 @@ class ScreenCanvas:
             None # lpParam
         )
             # http://msdn.microsoft.com/en-us/library/windows/desktop/ms633540(v=vs.85).aspx
-        win32gui.SetLayeredWindowAttributes(self.window_handle, 0x00ffffff, 255, win32con.LWA_COLORKEY | win32con.LWA_ALPHA)
+        win32gui.SetLayeredWindowAttributes(self.window_handle, 0x00ffffff, 255, win32_contants.LWA_COLORKEY | win32_contants.LWA_ALPHA)
 
         # http://msdn.microsoft.com/en-us/library/windows/desktop/dd145167(v=vs.85).aspx
         #win32gui.UpdateWindow(self.window_handle)
-
         # http://msdn.microsoft.com/en-us/library/windows/desktop/ms633545(v=vs.85).aspx
-        win32gui.SetWindowPos(self.window_handle, win32con.HWND_TOPMOST, 0, 0, 0, 0,
-            win32con.SWP_NOACTIVATE | win32con.SWP_NOMOVE | win32con.SWP_NOSIZE | win32con.SWP_SHOWWINDOW)
+        win32gui.SetWindowPos(self.window_handle, win32_contants.HWND_TOPMOST, 0, 0, 0, 0,
+            win32_contants.SWP_NOACTIVATE | win32_contants.SWP_NOMOVE | win32_contants.SWP_NOSIZE | win32_contants.SWP_SHOWWINDOW)
         self.window_rendered.set()
         pump_messages(weakref.ref(self))
 
     def _win_message(self, hWnd, message, wParam, lParam):
-        if message == win32con.WM_PAINT:
+        if message == win32_contants.WM_PAINT:
             device_context_handle, paintStruct = win32gui.BeginPaint(hWnd)
-            dpiScale = win32ui.GetDeviceCaps(device_context_handle, win32con.LOGPIXELSX) / 60.0
+            dpiScale = ctypes.windll.gdi32.GetDeviceCaps(device_context_handle, win32_contants.LOGPIXELSX) / 60.0
             fontSize = 14
 
             # http://msdn.microsoft.com/en-us/library/windows/desktop/dd145037(v=vs.85).aspx
@@ -102,11 +95,11 @@ class ScreenCanvas:
             self._draw(device_context_handle)
             win32gui.EndPaint(hWnd, paintStruct)
             return 0
-        elif message == win32con.WM_DESTROY:
+        elif message == win32_contants.WM_DESTROY:
             win32gui.PostQuitMessage(0)
             return 0
         else:
-            return win32gui.DefWindowProc(hWnd, message, wParam, lParam)
+            return ctypes.windll.user32.DefWindowProcW(hWnd, message, wParam, lParam)
 
     def _draw(self, device_context_handle):
         for rect in self.rectangles:
@@ -133,6 +126,7 @@ class ScreenCanvas:
 def pump_messages(canvas_reference):
     while canvas_reference is not None:
         win32gui.PumpWaitingMessages()
+        time.sleep(.01)
 
 def win32_color(color):
     if isinstance(color, (tuple, list)):

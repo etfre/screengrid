@@ -1,8 +1,7 @@
 import string
-from lib import keyboard
+import keyboard
 from screengrid import screencanvas
 
-import win32api, win32con, win32gui, win32ui
 import threading
 import time
 import string

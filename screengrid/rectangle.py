@@ -1,3 +1,4 @@
+import ctypes
 import win32gui, win32con
 
 TEXT_FORMAT = win32con.DT_CENTER | win32con.DT_NOCLIP | win32con.DT_SINGLELINE | win32con.DT_VCENTER

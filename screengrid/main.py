@@ -1,24 +1,13 @@
-import win32api, win32con, win32gui, win32ui
 import threading
 import time
-import string
-import ctypes
-import functools
 
-import screencanvas
-import grid
-import mouse
-
-done = False
-
-LETTERS = set(string.ascii_lowercase)
+import screengrid
 
 def foo():
-    main_grid = grid.Grid()
-    main_grid.overlay()
-    s = time.time()
-    while time.time() - s < 100:
-        win32gui.PumpWaitingMessages()
+    main_grid = screengrid.Grid()
+    main_grid.overlay(click=True)
+    time.sleep(5)
+    main_grid.font_color = 100, 100, 100
 
 def main():
     threading.Thread(target=foo, daemon=True).start()

@@ -2,3 +2,8 @@
 screengrid.egg-info/
 /build
 /dist
+/lib
+/include
+/scripts
+*.pyc
+pyvenv.cfg
